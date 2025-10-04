@@ -19,7 +19,7 @@ export default function TOC() {
        <NavLink href="/" as={Link}>Kambaz</NavLink>
      </NavItem>
      <NavItem>
-       <NavLink href="https://github.com/MigChi">My GitHub</NavLink>
+       <NavLink id="wd-github" href="https://github.com/MigChi">My GitHub</NavLink>
      </NavItem>
    </Nav>
 );}
