@@ -1,21 +1,49 @@
+"use client";
+
 import Link from "next/link";
-export default function CourseNavigation() {
+import { usePathname } from "next/navigation";
+
+const links = [
+  "Home",
+  "Modules",
+  "Piazza",
+  "Zoom",
+  "Assignments",
+  "Quizzes",
+  "Grades",
+  "People",
+] as const;
+
+const ROUTE_OVERRIDES: Record<string, string> = {
+  People: "People/Table", // People → /People/Table
+};
+
+export default function CourseNavigation({ cid }: { cid: string }) {
+  const pathname = usePathname();
+
   return (
     <div id="wd-courses-navigation" className="wd list-group fs-5 rounded-0">
-      <Link href="/Courses/1234/Home" id="wd-course-home-link"
-        className="list-group-item active border-0"> Home </Link>
-      <Link href="/Courses/1234/Modules" id="wd-course-modules-link"
-        className="list-group-item text-danger border-0"> Modules </Link>
-      <Link href="/Courses/1234/Piazza" id="wd-course-piazza-link"
-        className="list-group-item text-danger border-0"> Piazza </Link>
-      <Link href="/Courses/1234/Zoom" id="wd-course-zoom-link"
-        className="list-group-item text-danger border-0"> Zoom </Link>
-      <Link href="/Courses/1234/Assignments" id="wd-course-assignments-link"
-        className="list-group-item text-danger border-0"> Assignments </Link>
-      <Link href="/Courses/1234/Quizzes" id="wd-course-quizzes-link"
-        className="list-group-item text-danger border-0"> Quizzes </Link>
-      <Link href="/Courses/1234/People/Table" id="wd-course-people-link"
-        className="list-group-item text-danger border-0" > People </Link>
+      {links.map((label) => {
+        const subpath = ROUTE_OVERRIDES[label] ?? label;
+        const href = `/Courses/${cid}/${subpath}`;
+        const isActive = pathname?.startsWith(href);
+
+        return (
+          <Link
+            key={label}
+            href={href}
+            id={`wd-course-${label.toLowerCase()}-link`}
+            className={`list-group-item border-0 ${
+              isActive ? "active" : "text-danger"
+            }`}
+            aria-current={isActive ? "page" : undefined}
+          >
+            {label}
+          </Link>
+        );
+      })}
     </div>
-);}
+  );
+}
+
 

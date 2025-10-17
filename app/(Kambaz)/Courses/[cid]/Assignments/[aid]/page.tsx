@@ -1,42 +1,47 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Form, Row, Col, Button } from "react-bootstrap";
+import { Form, Row, Col, InputGroup } from "react-bootstrap";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import * as db from "../../../../Database";
+import { BsCalendar3 } from "react-icons/bs";
 
 export default function AssignmentEditor() {
+  const { cid, aid } = useParams<{ cid: string; aid: string }>();
+  const assignments: any[] = (db as any).assignments;
+  const assignment = assignments.find((a) => a._id === aid && a.course === cid) || {};
+
   return (
-    <div id="wd-assignments-editor"  style={{ maxWidth: 550 }} className="mx-auto">
+    <div id="wd-assignments-editor" style={{ maxWidth: 550 }} className="mx-auto">
       <Form>
         {/* Assignment Name */}
         <Form.Label htmlFor="wd-name" as="h2" className="fw-bold mb-2">
-          Assignment Name
+          {assignment.title}
         </Form.Label>
-        <Form.Control id="wd-name" defaultValue="123" className="mb-4" />
+        <Form.Control id="wd-name" defaultValue={assignment.title} className="mb-4" />
 
         {/* Description */}
-        <Form.Control id="wd-description" as="textarea" rows={9} className="mb-4" 
-        defaultValue={
-          `The assignment is available online
-
-          Submit a link to the landing page of your Web application running on Netlify.
-
-          The landing page should include the following:
-          • Your full name and section
-          • Links to each of the lab assignments
-          • Link to the Kanbas application
-          • Links to all relevant source code repositories
-
-          The Kanbas application should include a link to navigate back to the landing page.`
-        }/>
+        <Form.Control
+          id="wd-description"
+          as="textarea"
+          rows={9}
+          className="mb-4"
+          defaultValue={assignment.description}
+        />
 
         {/* Points */}
         <Row className="align-items-end mb-3">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-points" className="m-0">
-              Points
-            </Form.Label>
+            <Form.Label htmlFor="wd-points" className="m-0">Points</Form.Label>
           </Col>
           <Col sm={8}>
-            <Form.Control id="wd-points" type="number" defaultValue={100} style={{ maxWidth: 180 }} />
+            <Form.Control
+              id="wd-points"
+              type="number"
+              defaultValue={assignment.points}
+              style={{ maxWidth: 180 }}
+            />
           </Col>
         </Row>
 
@@ -55,8 +60,7 @@ export default function AssignmentEditor() {
         {/* Display Grade as */}
         <Row className="align-items-end mb-3">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-display-grade-as" className="m-0">
-              Display Grade as</Form.Label>
+            <Form.Label htmlFor="wd-display-grade-as" className="m-0">Display Grade as</Form.Label>
           </Col>
           <Col sm={8}>
             <Form.Select id="wd-display-grade-as" defaultValue="PERCENT" style={{ maxWidth: 260 }}>
@@ -68,9 +72,7 @@ export default function AssignmentEditor() {
         {/* Submission Type and Online Entry Options */}
         <Row className="mb-4">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-submission-type" className="m-0">
-              Submission Type
-            </Form.Label>
+            <Form.Label htmlFor="wd-submission-type" className="m-0">Submission Type</Form.Label>
           </Col>
           <Col sm={8}>
             <div className="border rounded p-3">
@@ -90,45 +92,62 @@ export default function AssignmentEditor() {
           </Col>
         </Row>
 
-        {/* Assign and Dates*/}
+        {/* Assign and Dates (calendar icon is purely visual) */}
         <Row className="mb-4">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-assign-to" className="m-0">
-              Assign
-            </Form.Label>
+            <Form.Label htmlFor="wd-assign-to" className="m-0">Assign</Form.Label>
           </Col>
           <Col sm={8}>
             <div className="border rounded p-3">
               <div className="fw-semibold mb-2">
                 <Form.Group controlId="wd-assign-to">
-                  <Form.Label className="fw-semibold">
-                    Assign to
-                  </Form.Label>
+                  <Form.Label className="fw-semibold">Assign to</Form.Label>
                   <Form.Control defaultValue="Everyone" />
                 </Form.Group>
               </div>
 
               {/* Due */}
-              <div className="mb-3" style={{ maxWidth: 260 }}>
-                <Form.Label htmlFor="wd-due-date" className="fw-semibold">
-                  Due
-                </Form.Label>
-                <Form.Control id="wd-due-date" type="date" defaultValue="2024-05-13" />
+              <div className="mb-3" style={{ maxWidth: 300 }}>
+                <Form.Label htmlFor="wd-due-date" className="fw-semibold">Due</Form.Label>
+                <InputGroup>
+                  <Form.Control
+                    id="wd-due-date"
+                    type="date"
+                    defaultValue={assignment.dueDate}
+                  />
+                  <InputGroup.Text aria-hidden="true" title="Calendar">
+                    <BsCalendar3 />
+                  </InputGroup.Text>
+                </InputGroup>
               </div>
 
               {/* Available From and Until */}
               <Row className="g-3">
                 <Col md={6}>
-                  <Form.Label htmlFor="wd-available-from" className="fw-semibold">
-                    Available from
-                  </Form.Label>
-                  <Form.Control id="wd-available-from" type="date" defaultValue="2024-05-06" />
+                  <Form.Label htmlFor="wd-available-from" className="fw-semibold">Available from</Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      id="wd-available-from"
+                      type="date"
+                      defaultValue={assignment.availableFrom}
+                    />
+                    <InputGroup.Text aria-hidden="true" title="Calendar">
+                      <BsCalendar3 />
+                    </InputGroup.Text>
+                  </InputGroup>
                 </Col>
                 <Col md={6}>
-                  <Form.Label htmlFor="wd-available-until" className="fw-semibold">
-                    Until
-                  </Form.Label>
-                  <Form.Control id="wd-available-until" type="date" defaultValue="2024-05-30" />
+                  <Form.Label htmlFor="wd-available-until" className="fw-semibold">Until</Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      id="wd-available-until"
+                      type="date"
+                      defaultValue={assignment.availableUntil}
+                    />
+                    <InputGroup.Text aria-hidden="true" title="Calendar">
+                      <BsCalendar3 />
+                    </InputGroup.Text>
+                  </InputGroup>
                 </Col>
               </Row>
             </div>
@@ -136,8 +155,8 @@ export default function AssignmentEditor() {
         </Row>
         
         <div className="d-flex justify-content-end gap-2">
-          <Button variant="light">Cancel</Button>
-          <Button variant="danger">Save</Button>
+          <Link href={`/Courses/${cid}/Assignments`} className="btn btn-light">Cancel</Link>
+          <Link href={`/Courses/${cid}/Assignments`} className="btn btn-danger">Save</Link>
         </div>
       </Form>
     </div>
