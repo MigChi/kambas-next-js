@@ -15,7 +15,7 @@ const links = [
 ] as const;
 
 const ROUTE_OVERRIDES: Record<string, string> = {
-  People: "People/Table", // People → /People/Table
+  People: "People/Table"
 };
 
 export default function CourseNavigation({ cid }: { cid: string }) {
