@@ -95,9 +95,12 @@ export default function Dashboard() {
             onChange={(e) => setCourse({ ...course, name: e.target.value })}
           />
           <FormControl
-            value={course.description}
+            as="textarea"
             rows={3}
-            onChange={(e) => setCourse({ ...course, description: e.target.value })}
+            value={course.description}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              setCourse({ ...course, description: e.target.value })
+            }
           />
           <hr />
         </>
