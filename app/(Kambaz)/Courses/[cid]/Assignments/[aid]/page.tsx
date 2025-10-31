@@ -65,7 +65,7 @@ export default function AssignmentEditor() {
   }, [existing, cid, isNew, router]);
 
   const onSave = () => {
-    if (readOnly) return; // students shouldn't save
+    if (readOnly) return; 
     const payload = {
       ...form,
       points: Number(form.points) || 0,
