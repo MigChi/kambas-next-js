@@ -1,18 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Row, Col, Button, InputGroup, Form, ButtonGroup } from "react-bootstrap";
 import { FaPlus, FaSearch } from "react-icons/fa";
+import { useParams, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 
 export default function AssignmentControls() {
+  const router = useRouter();
+  const { cid } = useParams<{ cid: string }>();
+  const { currentUser } = useSelector((s: any) => s.accountReducer);
+  const isFaculty = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
+
+  if (!isFaculty) return null;
+
   return (
     <div id="wd-assignment-controls" className="mb-2">
       <Row className="align-items-center g-2">
         <Col xs={12} md={5}>
           <InputGroup>
             <InputGroup.Text className="bg-white">
-              <FaSearch/>
+              <FaSearch />
             </InputGroup.Text>
-            <Form.Control placeholder="Search for Assignment"/>
+            <Form.Control placeholder="Search for Assignment" />
           </InputGroup>
         </Col>
 
@@ -26,7 +36,12 @@ export default function AssignmentControls() {
           </ButtonGroup>
 
           <ButtonGroup>
-            <Button variant="danger" id="wd-assignment" size="lg">
+            <Button
+              variant="danger"
+              id="wd-assignment"
+              size="lg"
+              onClick={() => router.push(`/Courses/${cid}/Assignments/new`)}
+            >
               <span className="d-inline-flex align-items-center text-nowrap">
                 <FaPlus className="me-2" /> Assignment
               </span>
