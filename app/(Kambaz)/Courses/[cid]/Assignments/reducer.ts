@@ -1,7 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = {
+export type Assignment = {
+  _id: string;
+  title: string;
+  description: string;
+  points: number;
+  course: string;
+  dueDate?: string | null;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
+  editing?: boolean;
+};
+
+type AssignmentsState = {
+  assignments: Assignment[];
+};
+
+const initialState: AssignmentsState = {
   assignments: [],
 };
 
@@ -9,35 +24,35 @@ const assignmentsSlice = createSlice({
   name: "assignments",
   initialState,
   reducers: {
-    setAssignments: (state, action) => {
+    setAssignments: (state, action: PayloadAction<Assignment[]>) => {
       state.assignments = action.payload;
     },
 
-    addAssignment: (state, { payload: serverAssignment }) => {
-      state.assignments = [...state.assignments, serverAssignment];
+    addAssignment: (state, action: PayloadAction<Assignment>) => {
+      state.assignments = [...state.assignments, action.payload];
     },
 
-    deleteAssignment: (state, { payload: assignmentId }) => {
+    deleteAssignment: (state, action: PayloadAction<string>) => {
       state.assignments = state.assignments.filter(
-        (asmt: any) => asmt._id !== assignmentId
+        (a) => a._id !== action.payload
       );
     },
 
-    updateAssignment: (state, { payload: updated }) => {
-      state.assignments = state.assignments.map((asmt: any) =>
-        asmt._id === updated._id ? updated : asmt
+    updateAssignment: (state, action: PayloadAction<Assignment>) => {
+      state.assignments = state.assignments.map((a) =>
+        a._id === action.payload._id ? action.payload : a
       );
     },
 
-    editAssignment: (state, { payload: assignmentId }) => {
-      state.assignments = state.assignments.map((asmt: any) =>
-        asmt._id === assignmentId ? { ...asmt, editing: true } : asmt
+    editAssignment: (state, action: PayloadAction<string>) => {
+      state.assignments = state.assignments.map((a) =>
+        a._id === action.payload ? { ...a, editing: true } : a
       );
     },
 
-    cancelEditAssignment: (state, { payload: assignmentId }) => {
-      state.assignments = state.assignments.map((asmt: any) =>
-        asmt._id === assignmentId ? { ...asmt, editing: false } : asmt
+    cancelEditAssignment: (state, action: PayloadAction<string>) => {
+      state.assignments = state.assignments.map((a) =>
+        a._id === action.payload ? { ...a, editing: false } : a
       );
     },
   },
