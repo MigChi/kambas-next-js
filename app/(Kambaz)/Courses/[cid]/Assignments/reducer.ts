@@ -34,25 +34,25 @@ const assignmentsSlice = createSlice({
 
     deleteAssignment: (state, action: PayloadAction<string>) => {
       state.assignments = state.assignments.filter(
-        (a) => a._id !== action.payload
+        (asmt) => asmt._id !== action.payload
       );
     },
 
     updateAssignment: (state, action: PayloadAction<Assignment>) => {
-      state.assignments = state.assignments.map((a) =>
-        a._id === action.payload._id ? action.payload : a
+      state.assignments = state.assignments.map((asmt) =>
+        asmt._id === action.payload._id ? action.payload : asmt
       );
     },
 
     editAssignment: (state, action: PayloadAction<string>) => {
-      state.assignments = state.assignments.map((a) =>
-        a._id === action.payload ? { ...a, editing: true } : a
+      state.assignments = state.assignments.map((asmt) =>
+        asmt._id === action.payload ? { ...asmt, editing: true } : asmt
       );
     },
 
     cancelEditAssignment: (state, action: PayloadAction<string>) => {
-      state.assignments = state.assignments.map((a) =>
-        a._id === action.payload ? { ...a, editing: false } : a
+      state.assignments = state.assignments.map((asmt) =>
+        asmt._id === action.payload ? { ...asmt, editing: false } : asmt
       );
     },
   },
