@@ -9,7 +9,14 @@ import Link from "next/link";
 import { BsGripVertical, BsJournalText, BsCaretDownFill, BsTrash } from "react-icons/bs";
 import { useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteAssignment } from "./reducer";
+import {
+  deleteAssignment as deleteAssignmentReducer,
+  updateAssignment as updateAssignmentReducer,
+  addAssignment as addAssignmentReducer,
+  setAssignments,
+} from "./reducer";
+import * as client from "./client";
+import { useEffect } from "react";
 
 const ordinal = (n: number) => {
   const s = ["th", "st", "nd", "rd"], v = n % 100;
@@ -18,9 +25,7 @@ const ordinal = (n: number) => {
 
 const prettyDate = (iso?: string, timeLabel?: string) => {
   if (!iso) return "";
-  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso)
-    ? new Date(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)))
-    : new Date(iso);
+  const d = new Date(iso);
   const month = d.toLocaleString("en-US", { month: "long" });
   const day = ordinal(d.getDate());
   return `${month} ${day}${timeLabel ? ` at ${timeLabel}` : ""}`;
@@ -33,7 +38,20 @@ export default function Assignments() {
   const { currentUser } = useSelector((s: any) => s.accountReducer);
   const isFaculty = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
 
-  const courseAssignments = (assignments as any[]).filter((a) => a.course === cid);
+  useEffect(() => {
+    const load = async () => {
+      const serverAssignments = await client.findAssignmentsForCourse(cid);
+      dispatch(setAssignments(serverAssignments));
+    };
+    load();
+  }, [cid]);
+
+  const courseAssignments = assignments.filter((a: any) => a.course === cid);
+
+  const onDeleteAssignment = async (assignmentId: string) => {
+    await client.deleteAssignment(assignmentId);
+    dispatch(setAssignments(assignments.filter((a: any) => a._id !== assignmentId)));
+  };
 
   return (
     <div id="wd-assignments">
@@ -59,38 +77,26 @@ export default function Assignments() {
                   </div>
 
                   <div className="col">
-                    <Link
-                      href={`/Courses/${cid}/Assignments/${assignment._id}`}
-                      className="fw-semibold text-dark text-decoration-none"
-                    >
+                    <Link href={`/Courses/${cid}/Assignments/${assignment._id}`}
+                      className="fw-semibold text-dark text-decoration-none">
                       {assignment.title}
                     </Link>
+
                     <div className="small text-muted mt-1">
-                      Multiple Modules | <b>Not available until</b>{" "}
-                      {prettyDate(assignment.availableFrom, "12:00am")} |
-                      <br />
                       <b>Due</b> {prettyDate(assignment.dueDate, "11:59pm")} | {assignment.points} pts
                     </div>
                   </div>
 
-                  <div className="col-auto d-flex align-items-center gap-2">
-                    <AssignmentControlButtons />
-
-                    {isFaculty && (
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        title="Delete assignment"
-                        onClick={() => {
-                          if (window.confirm("Are you sure you want to remove this assignment?")) {
-                            dispatch(deleteAssignment(assignment._id));
-                          }
-                        }}
-                      >
-                        <BsTrash />
-                      </Button>
-                    )}
-                  </div>
+                  {isFaculty && (
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      title="Delete assignment"
+                      onClick={() => onDeleteAssignment(assignment._id)}
+                    >
+                      <BsTrash />
+                    </Button>
+                  )}
                 </div>
               </ListGroupItem>
             ))}

@@ -6,7 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { BsCalendar3 } from "react-icons/bs";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useMemo, useState } from "react";
-import { addAssignment, updateAssignment } from "../reducer";
+import { setAssignments } from "../reducer";
+import * as client from "../client";
 
 type FormState = {
   _id?: string;
@@ -27,13 +28,13 @@ export default function AssignmentEditor() {
   const dispatch = useDispatch();
 
   const isNew = aid === "new";
-  const isFaculty = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
-  const readOnly = !isFaculty; 
+  const isFaculty =
+    currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
+  const readOnly = !isFaculty;
 
   const existing = useMemo(
-    () =>
-      (assignments as any[]).find((a) => a._id === aid && a.course === cid),
-    [assignments, aid, cid]
+    () => assignments.find((a: any) => a._id === aid),
+    [assignments, aid]
   );
 
   const [form, setForm] = useState<FormState>({
@@ -64,17 +65,24 @@ export default function AssignmentEditor() {
     });
   }, [existing, cid, isNew, router]);
 
-  const onSave = () => {
-    if (readOnly) return; 
+  const onSave = async () => {
+    if (readOnly) return;
+
     const payload = {
       ...form,
       points: Number(form.points) || 0,
     };
+
     if (isNew) {
-      dispatch(addAssignment(payload as any));
+      await client.createAssignment(cid, payload);
     } else {
-      dispatch(updateAssignment(payload as any));
+      await client.updateAssignment(payload);
     }
+
+    // Reload assignments after save
+    const serverAssignments = await client.findAssignmentsForCourse(cid);
+    dispatch(setAssignments(serverAssignments));
+
     router.push(`/Courses/${cid}/Assignments`);
   };
 
@@ -83,9 +91,13 @@ export default function AssignmentEditor() {
   };
 
   return (
-    <div id="wd-assignments-editor" style={{ maxWidth: 550 }} className="mx-auto">
+    <div
+      id="wd-assignments-editor"
+      style={{ maxWidth: 550 }}
+      className="mx-auto"
+    >
       <Form>
-        {/* Assignment Name */}
+        {/* Assignment Title */}
         <Form.Label htmlFor="wd-name" as="h2" className="fw-bold mb-2">
           {isNew ? "New Assignment" : form.title || "Assignment"}
         </Form.Label>
@@ -111,9 +123,7 @@ export default function AssignmentEditor() {
         {/* Points */}
         <Row className="align-items-end mb-3">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-points" className="m-0">
-              Points
-            </Form.Label>
+            <Form.Label htmlFor="wd-points">Points</Form.Label>
           </Col>
           <Col sm={8}>
             <Form.Control
@@ -121,60 +131,71 @@ export default function AssignmentEditor() {
               type="number"
               value={form.points}
               disabled={readOnly}
-              onChange={(e) => setForm({ ...form, points: Number(e.target.value) })}
+              onChange={(e) =>
+                setForm({ ...form, points: Number(e.target.value) })
+              }
               style={{ maxWidth: 180 }}
             />
           </Col>
         </Row>
 
+        {/* Assignment Group */}
         <Row className="align-items-end mb-3">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-group" className="m-0">Assignment Group</Form.Label>
+            <Form.Label>Assignment Group</Form.Label>
           </Col>
           <Col sm={8}>
-            <Form.Select id="wd-group" defaultValue="ASSIGNMENTS" style={{ maxWidth: 260 }} disabled>
+            <Form.Select
+              defaultValue="ASSIGNMENTS"
+              style={{ maxWidth: 260 }}
+              disabled
+            >
               <option value="ASSIGNMENTS">ASSIGNMENTS</option>
             </Form.Select>
           </Col>
         </Row>
 
+        {/* Display Grade As */}
         <Row className="align-items-end mb-3">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-display-grade-as" className="m-0">Display Grade as</Form.Label>
+            <Form.Label>Display Grade As</Form.Label>
           </Col>
           <Col sm={8}>
-            <Form.Select id="wd-display-grade-as" defaultValue="PERCENT" style={{ maxWidth: 260 }} disabled>
+            <Form.Select
+              defaultValue="PERCENT"
+              style={{ maxWidth: 260 }}
+              disabled
+            >
               <option value="PERCENT">Percentage</option>
             </Form.Select>
           </Col>
         </Row>
 
-        {/* Assign & Dates */}
+        {/* Assign To + Dates */}
         <Row className="mb-4">
           <Col sm={4} className="text-sm-end fw-semibold">
-            <Form.Label htmlFor="wd-assign-to" className="m-0">Assign</Form.Label>
+            <Form.Label>Assign</Form.Label>
           </Col>
           <Col sm={8}>
             <div className="border rounded p-3">
-              <div className="fw-semibold mb-2">
-                <Form.Group controlId="wd-assign-to">
-                  <Form.Label className="fw-semibold">Assign to</Form.Label>
-                  <Form.Control defaultValue="Everyone" disabled />
-                </Form.Group>
-              </div>
+              <Form.Group className="mb-3">
+                <Form.Label>Assign to</Form.Label>
+                <Form.Control defaultValue="Everyone" disabled />
+              </Form.Group>
 
-              {/* Due */}
+              {/* Due Date */}
               <div className="mb-3" style={{ maxWidth: 300 }}>
-                <Form.Label htmlFor="wd-due-date" className="fw-semibold">Due</Form.Label>
+                <Form.Label>Due</Form.Label>
                 <InputGroup>
                   <Form.Control
-                    id="wd-due-date"
                     type="date"
                     value={form.dueDate ?? ""}
                     disabled={readOnly}
-                    onChange={(e) => setForm({ ...form, dueDate: e.target.value || null })}
+                    onChange={(e) =>
+                      setForm({ ...form, dueDate: e.target.value || null })
+                    }
                   />
-                  <InputGroup.Text aria-hidden="true" title="Calendar">
+                  <InputGroup.Text>
                     <BsCalendar3 />
                   </InputGroup.Text>
                 </InputGroup>
@@ -183,35 +204,40 @@ export default function AssignmentEditor() {
               {/* Available From / Until */}
               <Row className="g-3">
                 <Col md={6}>
-                  <Form.Label htmlFor="wd-available-from" className="fw-semibold">
-                    Available from
-                  </Form.Label>
+                  <Form.Label>Available From</Form.Label>
                   <InputGroup>
                     <Form.Control
-                      id="wd-available-from"
                       type="date"
                       value={form.availableFrom ?? ""}
                       disabled={readOnly}
-                      onChange={(e) => setForm({ ...form, availableFrom: e.target.value || null })}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          availableFrom: e.target.value || null,
+                        })
+                      }
                     />
-                    <InputGroup.Text aria-hidden="true" title="Calendar">
+                    <InputGroup.Text>
                       <BsCalendar3 />
                     </InputGroup.Text>
                   </InputGroup>
                 </Col>
+
                 <Col md={6}>
-                  <Form.Label htmlFor="wd-available-until" className="fw-semibold">
-                    Until
-                  </Form.Label>
+                  <Form.Label>Until</Form.Label>
                   <InputGroup>
                     <Form.Control
-                      id="wd-available-until"
                       type="date"
                       value={form.availableUntil ?? ""}
                       disabled={readOnly}
-                      onChange={(e) => setForm({ ...form, availableUntil: e.target.value || null })}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          availableUntil: e.target.value || null,
+                        })
+                      }
                     />
-                    <InputGroup.Text aria-hidden="true" title="Calendar">
+                    <InputGroup.Text>
                       <BsCalendar3 />
                     </InputGroup.Text>
                   </InputGroup>
@@ -221,8 +247,11 @@ export default function AssignmentEditor() {
           </Col>
         </Row>
 
+        {/* Buttons */}
         <div className="d-flex justify-content-end gap-2">
-          <Button variant="light" onClick={onCancel}>Cancel</Button>
+          <Button variant="light" onClick={onCancel}>
+            Cancel
+          </Button>
           {!readOnly && (
             <Button variant="danger" onClick={onSave} id="wd-save-assignment">
               Save

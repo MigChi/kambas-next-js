@@ -1,29 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice } from "@reduxjs/toolkit";
-import { assignments as dbAssignments } from "../../../Database";
-import { v4 as uuidv4 } from "uuid";
 
 const initialState = {
-  assignments: dbAssignments,
+  assignments: [],
 };
 
 const assignmentsSlice = createSlice({
   name: "assignments",
   initialState,
   reducers: {
-    addAssignment: (state, { payload: a }) => {
-      const newAssignment: any = {
-        _id: uuidv4(),
-        title: a.title ?? "New Assignment",
-        description: a.description ?? "",
-        course: a.course, 
-        points: a.points ?? 100,
-        dueDate: a.dueDate ?? null,
-        availableFrom: a.availableFrom ?? null,
-        availableUntil: a.availableUntil ?? null,
-        ...a,
-      };
-      state.assignments = [...state.assignments, newAssignment] as any;
+    setAssignments: (state, action) => {
+      state.assignments = action.payload;
+    },
+
+    addAssignment: (state, { payload: serverAssignment }) => {
+      state.assignments = [...state.assignments, serverAssignment];
     },
 
     deleteAssignment: (state, { payload: assignmentId }) => {
@@ -32,26 +23,28 @@ const assignmentsSlice = createSlice({
       );
     },
 
-    updateAssignment: (state, { payload: a }) => {
+    updateAssignment: (state, { payload: updated }) => {
       state.assignments = state.assignments.map((asmt: any) =>
-        asmt._id === a._id ? a : asmt
-      ) as any;
+        asmt._id === updated._id ? updated : asmt
+      );
     },
 
     editAssignment: (state, { payload: assignmentId }) => {
       state.assignments = state.assignments.map((asmt: any) =>
         asmt._id === assignmentId ? { ...asmt, editing: true } : asmt
-      ) as any;
+      );
     },
+
     cancelEditAssignment: (state, { payload: assignmentId }) => {
       state.assignments = state.assignments.map((asmt: any) =>
         asmt._id === assignmentId ? { ...asmt, editing: false } : asmt
-      ) as any;
+      );
     },
   },
 });
 
 export const {
+  setAssignments,
   addAssignment,
   deleteAssignment,
   updateAssignment,

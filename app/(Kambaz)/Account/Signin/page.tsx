@@ -1,26 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 import Link from "next/link";
-import { redirect } from "next/dist/client/components/navigation";
+import { redirect } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import { FormControl, Button } from "react-bootstrap";
 import { setCurrentUser } from "../reducer";
-import * as db from "../../Database";
+import * as client from "../client";   
 
 export default function Signin() {
-  const [credentials, setCredentials] = useState<any>({ username: "", password: "" });
+  const [credentials, setCredentials] = useState<any>({
+    username: "",
+    password: "",
+  });
+
   const dispatch = useDispatch();
 
-  const signin = () => {
-    const user = db.users.find(
-      (u: any) =>
-        u.username === credentials.username &&
-        u.password === credentials.password
-    );
-    if (!user) return;
-    dispatch(setCurrentUser(user));
-    redirect("/Dashboard");
+  const signin = async () => {
+    try {
+      const user = await client.signin(credentials); 
+      if (!user) return;
+
+      dispatch(setCurrentUser(user));
+      redirect("/Dashboard");
+    } catch (e) {
+      console.error("Signin failed:", e);
+    }
   };
 
   return (
