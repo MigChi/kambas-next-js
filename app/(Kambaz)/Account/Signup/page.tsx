@@ -1,25 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Link from "next/link";
-// ❌ remove this:
-// import { redirect } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import { FormControl, Button } from "react-bootstrap";
 import { setCurrentUser } from "../reducer";
 import * as client from "../client";
-import { useRouter } from "next/navigation";  // ✅
+import { useRouter } from "next/navigation";
 
 export default function Signup() {
   const [user, setUser] = useState<any>({ username: "", password: "" });
   const dispatch = useDispatch();
-  const router = useRouter();  // ✅
+  const router = useRouter();  
 
   const signup = async () => {
     try {
       const currentUser = await client.signup(user);
       dispatch(setCurrentUser(currentUser));
-      router.push("/Account/Profile");  // ✅ instead of redirect
+      router.push("/Account/Profile"); 
     } catch (e) {
       console.error("Signup error:", e);
     }

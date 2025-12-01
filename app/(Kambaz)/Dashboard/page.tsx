@@ -18,6 +18,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { setMyCourses } from "../Courses/reducer";
 import * as coursesClient from "../Courses/client";
 import * as enrollmentsClient from "../Enrollments/client";
+import { enrollUserInCourse } from "../Enrollments/client";
+
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -89,8 +91,23 @@ export default function Dashboard() {
   }, [currentUser]);
 
   const onAddCourse = async () => {
-    // Creator is auto-enrolled on the server
-    await coursesClient.createCourse(course);
+    if (!currentUser) return;
+
+    // Create the course on the server
+    const created = await coursesClient.createCourse(course);
+
+    // Try to auto-enroll the creator explicitly (works even if server fails to do it)
+    const courseId = created?._id;
+    if (courseId) {
+      try {
+        await enrollUserInCourse(currentUser._id, courseId);
+      } catch (e) {
+        // If the server already auto-enrolled and this 409s or something, we don't care
+        console.error("Auto-enroll creator failed (safe to ignore if duplicate):", e);
+      }
+    }
+
+    // Recompute myCourses (will include the new course now that an enrollment exists)
     await fetchMyCourses();
   };
 

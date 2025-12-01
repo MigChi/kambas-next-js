@@ -14,7 +14,6 @@ export default function Session({ children }: { children: any }) {
       const currentUser = await client.profile();
       dispatch(setCurrentUser(currentUser));
     } catch (err: any) {
-      // Most likely 401 when not logged in, or cookie issues on Vercel
       console.error("Profile fetch failed:", err);
     } finally {
       setPending(false);
@@ -26,7 +25,6 @@ export default function Session({ children }: { children: any }) {
   }, []);
 
   if (pending) {
-    // You can optionally return a spinner here
     return null;
   }
 
