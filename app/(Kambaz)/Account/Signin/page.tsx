@@ -2,12 +2,14 @@
 "use client";
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
+// ❌ remove this:
+// import { redirect } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import { FormControl, Button } from "react-bootstrap";
 import { setCurrentUser } from "../reducer";
-import * as client from "../client";   
+import * as client from "../client";
+import { useRouter } from "next/navigation";  // ✅ add this
 
 export default function Signin() {
   const [credentials, setCredentials] = useState<any>({
@@ -16,14 +18,15 @@ export default function Signin() {
   });
 
   const dispatch = useDispatch();
+  const router = useRouter();  // ✅
 
   const signin = async () => {
     try {
-      const user = await client.signin(credentials); 
+      const user = await client.signin(credentials);
       if (!user) return;
 
       dispatch(setCurrentUser(user));
-      redirect("/Dashboard");
+      router.push("/Dashboard");   // ✅ instead of redirect("/Dashboard")
     } catch (e) {
       console.error("Signin failed:", e);
     }

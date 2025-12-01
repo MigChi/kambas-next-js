@@ -16,7 +16,8 @@ import {
 } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { setMyCourses } from "../Courses/reducer";
-import * as client from "../Courses/client";
+import * as coursesClient from "../Courses/client";
+import * as enrollmentsClient from "../Enrollments/client";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -36,32 +37,72 @@ export default function Dashboard() {
   });
 
   const fetchMyCourses = async () => {
-    const courses = await client.findMyCourses();
-    dispatch(setMyCourses(courses ?? []));
+    if (!currentUser?._id) {
+      dispatch(setMyCourses([]));
+      return;
+    }
+
+    try {
+      // Try server-side "current user" endpoint first (uses session/cookies)
+      const courses = await coursesClient.findMyCourses();
+      if (Array.isArray(courses) && courses.length > 0) {
+        dispatch(setMyCourses(courses));
+        return;
+      }
+      // If it returns empty, fall through to manual derivation
+    } catch (err) {
+      console.error("findMyCourses failed, falling back:", err);
+    }
+
+    // Fallback: derive my courses from enrollments + all courses (no session needed)
+    try {
+      const [allCourses, enrollments] = await Promise.all([
+        coursesClient.fetchAllCourses(),
+        enrollmentsClient.findAllEnrollments(),
+      ]);
+
+      const myCourseIds = new Set(
+        (enrollments || [])
+          .filter((e: any) => e.user === currentUser._id)
+          .map((e: any) => e.course)
+      );
+
+      const mine = (allCourses || []).filter((c: any) =>
+        myCourseIds.has(c._id)
+      );
+
+      dispatch(setMyCourses(mine));
+    } catch (fallbackErr) {
+      console.error("Fallback myCourses computation failed:", fallbackErr);
+      dispatch(setMyCourses([]));
+    }
   };
 
   useEffect(() => {
     if (currentUser) {
       fetchMyCourses();
+    } else {
+      // signed out
+      dispatch(setMyCourses([]));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   const onAddCourse = async () => {
     // Creator is auto-enrolled on the server
-    await client.createCourse(course);
+    await coursesClient.createCourse(course);
     await fetchMyCourses();
   };
 
   const onDeleteCourse = async (courseId: string) => {
-    await client.deleteCourse(courseId);
-    // Remove from *my* courses list on the Dashboard
+    await coursesClient.deleteCourse(courseId);
     dispatch(
       setMyCourses(myCourses.filter((c: any) => c._id !== courseId))
     );
   };
 
   const onUpdateCourse = async () => {
-    const updated = await client.updateCourse(course);
+    const updated = await coursesClient.updateCourse(course);
     dispatch(
       setMyCourses(
         myCourses.map((c: any) => (c._id === course._id ? updated : c))

@@ -1,25 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Button, FormControl } from "react-bootstrap";
 import { setCurrentUser } from "../reducer";
 import * as client from "../client";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const [profile, setProfile] = useState<any>({});
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const router = useRouter();
 
   useEffect(() => {
     if (!currentUser) {
-      redirect("/Account/Signin");
+      router.replace("/Account/Signin");
       return;
     }
     setProfile(currentUser);
-  }, [currentUser]);
+  }, [currentUser, router]);
 
   const updateProfile = async () => {
     try {
@@ -31,9 +32,13 @@ export default function Profile() {
   };
 
   const signout = async () => {
-    await client.signout();
+    try {
+      await client.signout();
+    } catch (e) {
+      console.error("Signout failed:", e);
+    }
     dispatch(setCurrentUser(null));
-    redirect("/Account/Signin");
+    router.push("/Account/Signin");
   };
 
   return (

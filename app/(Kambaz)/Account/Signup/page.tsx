@@ -1,22 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+// ❌ remove this:
+// import { redirect } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { useState } from "react";
 import { FormControl, Button } from "react-bootstrap";
 import { setCurrentUser } from "../reducer";
 import * as client from "../client";
+import { useRouter } from "next/navigation";  // ✅
 
 export default function Signup() {
   const [user, setUser] = useState<any>({ username: "", password: "" });
   const dispatch = useDispatch();
+  const router = useRouter();  // ✅
 
   const signup = async () => {
     try {
       const currentUser = await client.signup(user);
       dispatch(setCurrentUser(currentUser));
-      redirect("/Account/Profile");
+      router.push("/Account/Profile");  // ✅ instead of redirect
     } catch (e) {
       console.error("Signup error:", e);
     }
@@ -44,11 +47,7 @@ export default function Signup() {
           onChange={(e) => setUser({ ...user, password: e.target.value })}
         />
 
-        <Button
-          id="wd-signup-btn"
-          className="w-100 mb-2"
-          onClick={signup}
-        >
+        <Button id="wd-signup-btn" className="w-100 mb-2" onClick={signup}>
           Sign Up
         </Button>
 

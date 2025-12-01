@@ -3,14 +3,14 @@
 
 import { Button } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
-import { unenroll, enroll } from "../../Enrollments/reducer";
+import { useParams } from "next/navigation";
 import {
   unenrollUserFromCourse,
   enrollUserInCourse,
 } from "../../Enrollments/client";
-import { useParams } from "next/navigation";
 import { setMyCourses } from "../reducer";
 import * as coursesClient from "../client";
+import * as enrollmentsClient from "../../Enrollments/client";
 
 type Props = {
   courseId?: string;
@@ -22,29 +22,64 @@ export default function EnrollmentsButton({ courseId }: Props) {
   const dispatch = useDispatch();
 
   const { currentUser } = useSelector((s: any) => s.accountReducer);
-  const { enrollments } = useSelector((s: any) => s.enrollmentsReducer);
+  const { myCourses } = useSelector((s: any) => s.coursesReducer);
 
   if (!currentUser || !cid) return null;
 
   const userId = currentUser._id;
-  const isEnrolled = enrollments.some(
-    (e: any) => e.user === userId && e.course === cid
-  );
+  const isEnrolled = myCourses.some((c: any) => c._id === cid);
 
   const refreshMyCourses = async () => {
-    const myCourses = await coursesClient.findMyCourses();
-    dispatch(setMyCourses(myCourses ?? []));
+    if (!currentUser?._id) {
+      dispatch(setMyCourses([]));
+      return;
+    }
+
+    // Try session-based "current user courses" first
+    try {
+      const courses = await coursesClient.findMyCourses();
+      if (Array.isArray(courses) && courses.length > 0) {
+        dispatch(setMyCourses(courses));
+        return;
+      }
+      // If empty, fall through to fallback
+    } catch (err) {
+      console.error("findMyCourses in EnrollmentsButton failed, falling back:", err);
+    }
+
+    // Fallback based on enrollments + all courses
+    try {
+      const [allCourses, enrollments] = await Promise.all([
+        coursesClient.fetchAllCourses(),
+        enrollmentsClient.findAllEnrollments(),
+      ]);
+
+      const myCourseIds = new Set(
+        (enrollments || [])
+          .filter((e: any) => e.user === currentUser._id)
+          .map((e: any) => e.course)
+      );
+
+      const mine = (allCourses || []).filter((c: any) =>
+        myCourseIds.has(c._id)
+      );
+
+      dispatch(setMyCourses(mine));
+    } catch (fallbackErr) {
+      console.error(
+        "Fallback myCourses computation in EnrollmentsButton failed:",
+        fallbackErr
+      );
+    }
   };
 
   const handleEnroll = async () => {
     await enrollUserInCourse(userId, cid);
-    dispatch(enroll({ user: userId, course: cid }));
     await refreshMyCourses();
   };
 
   const handleUnenroll = async () => {
     await unenrollUserFromCourse(userId, cid);
-    dispatch(unenroll({ user: userId, course: cid }));
     await refreshMyCourses();
   };
 
