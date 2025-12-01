@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -15,13 +16,13 @@ import {
   Button,
 } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { setCourses } from "../Courses/reducer";
+import { setMyCourses } from "../Courses/reducer";
 import * as client from "../Courses/client";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const { courses } = useSelector((state: any) => state.coursesReducer);
+  const { myCourses } = useSelector((state: any) => state.coursesReducer);
 
   const isFaculty =
     currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
@@ -36,8 +37,8 @@ export default function Dashboard() {
   });
 
   const fetchCourses = async () => {
-    const myCourses = await client.findMyCourses();
-    dispatch(setCourses(myCourses ?? []));
+    const courses = await client.findMyCourses();
+    dispatch(setMyCourses(courses ?? []));
   };
 
   useEffect(() => {
@@ -45,20 +46,23 @@ export default function Dashboard() {
   }, [currentUser]);
 
   const onAddCourse = async () => {
-    const newCourse = await client.createCourse(course);
-    dispatch(setCourses([...courses, newCourse]));
+    await client.createCourse(course);
+    // Creator is auto-enrolled; refresh my courses
+    await fetchCourses();
   };
 
   const onDeleteCourse = async (courseId: string) => {
     await client.deleteCourse(courseId);
-    dispatch(setCourses(courses.filter((c: any) => c._id !== courseId)));
+    dispatch(
+      setMyCourses(myCourses.filter((c: any) => c._id !== courseId))
+    );
   };
 
   const onUpdateCourse = async () => {
     const updated = await client.updateCourse(course);
     dispatch(
-      setCourses(
-        courses.map((c: any) => (c._id === course._id ? updated : c))
+      setMyCourses(
+        myCourses.map((c: any) => (c._id === course._id ? updated : c))
       )
     );
   };
@@ -75,7 +79,7 @@ export default function Dashboard() {
       {currentUser && (
         <>
           <h2 id="wd-dashboard-published">
-            My Courses ({courses.length})
+            My Courses ({myCourses.length})
           </h2>
           <hr />
         </>
@@ -132,7 +136,7 @@ export default function Dashboard() {
 
       <div id="wd-dashboard-courses">
         <Row xs={1} md={5} className="g-4">
-          {courses.map((c: any) => (
+          {myCourses.map((c: any) => (
             <Col
               key={c._id}
               className="wd-dashboard-course"
