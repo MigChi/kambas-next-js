@@ -37,8 +37,18 @@ export default function Dashboard() {
   });
 
   const fetchCourses = async () => {
-    const courses = await client.findMyCourses();
-    dispatch(setMyCourses(courses ?? []));
+    try {
+      const courses = await client.findMyCourses();
+      console.log("My courses from server:", courses);
+      dispatch(setMyCourses(courses ?? []));
+    } catch (err: any) {
+      console.error(
+        "Error fetching my courses:",
+        err?.response?.status,
+        err?.response?.data,
+        err
+      );
+    }
   };
 
   useEffect(() => {
@@ -159,49 +169,49 @@ export default function Dashboard() {
                       {c.name}
                     </CardTitle>
 
-                    <CardText
-                      className="wd-dashboard-course-description overflow-hidden"
-                      style={{ height: "100px" }}
-                    >
-                      {c.description}
-                    </CardText>
+                      <CardText
+                        className="wd-dashboard-course-description overflow-hidden"
+                        style={{ height: "100px" }}
+                      >
+                        {c.description}
+                      </CardText>
 
-                    <div className="d-flex align-items-center">
-                      <button className="btn btn-primary">Go</button>
+                      <div className="d-flex align-items-center">
+                        <button className="btn btn-primary">Go</button>
 
-                      {isFaculty && (
-                        <>
-                          <Button
-                            variant="warning"
-                            className="ms-2"
-                            id="wd-edit-course-click"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              setCourse(c);
-                            }}
-                          >
-                            Edit
-                          </Button>
+                        {isFaculty && (
+                          <>
+                            <Button
+                              variant="warning"
+                              className="ms-2"
+                              id="wd-edit-course-click"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                setCourse(c);
+                              }}
+                            >
+                              Edit
+                            </Button>
 
-                          <Button
-                            variant="danger"
-                            className="ms-2"
-                            id="wd-delete-course-click"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              onDeleteCourse(c._id);
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardBody>
-                </Link>
-              </Card>
-            </Col>
-          ))}
+                            <Button
+                              variant="danger"
+                              className="ms-2"
+                              id="wd-delete-course-click"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                onDeleteCourse(c._id);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </CardBody>
+                  </Link>
+                </Card>
+              </Col>
+            ))}
         </Row>
       </div>
     </div>
