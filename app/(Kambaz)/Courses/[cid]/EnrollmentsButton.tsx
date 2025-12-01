@@ -9,7 +9,7 @@ import {
   enrollUserInCourse,
 } from "../../Enrollments/client";
 import { useParams } from "next/navigation";
-import { setMyCourses } from "../reducer";
+import { setCourses } from "../reducer";
 import * as coursesClient from "../client";
 
 type Props = {
@@ -33,7 +33,7 @@ export default function EnrollmentsButton({ courseId }: Props) {
 
   const refreshMyCourses = async () => {
     const myCourses = await coursesClient.findMyCourses();
-    dispatch(setMyCourses(myCourses ?? []));
+    dispatch(setCourses(myCourses ?? []));
   };
 
   const handleEnroll = async () => {
