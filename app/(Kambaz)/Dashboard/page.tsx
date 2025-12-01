@@ -93,23 +93,66 @@ export default function Dashboard() {
   const onAddCourse = async () => {
     if (!currentUser) return;
 
-    // Create the course on the server
-    const created = await coursesClient.createCourse(course);
+    let newCourseId: string | undefined;
 
-    // Try to auto-enroll the creator explicitly (works even if server fails to do it)
-    const courseId = created?._id;
-    if (courseId) {
+    try {
+      // 1. Create the course
+      const created = await coursesClient.createCourse(course);
+      console.log("Created course response:", created);
+
+      // 2. Try to grab an ID directly from the response (covers local dev / simple cases)
+      if (created && typeof created === "object") {
+        // common patterns: {_id}, {id}, {courseId}, or an array
+        newCourseId =
+          (created as any)._id ??
+          (created as any).id ??
+          (created as any).courseId ??
+          (Array.isArray(created) && created[0]?._id);
+      }
+    } catch (e) {
+      console.error("createCourse failed:", e);
+    }
+
+    // 3. Fallback – if we still don't know the courseId, infer it from /api/courses
+    if (!newCourseId) {
       try {
-        await enrollUserInCourse(currentUser._id, courseId);
+        const allCourses = await coursesClient.fetchAllCourses();
+
+        // Find courses that match what we just created (name + number is usually enough)
+        const matches = (allCourses || []).filter(
+          (c: any) => c.name === course.name && c.number === course.number
+        );
+
+        if (matches.length > 0) {
+          // Take the last match, assuming it's the newest
+          const newest = matches[matches.length - 1];
+          newCourseId = newest._id;
+        }
       } catch (e) {
-        // If the server already auto-enrolled and this 409s or something, we don't care
-        console.error("Auto-enroll creator failed (safe to ignore if duplicate):", e);
+        console.error("Unable to infer new course ID from /api/courses:", e);
       }
     }
 
-    // Recompute myCourses (will include the new course now that an enrollment exists)
+    // 4. If we have an ID, explicitly enroll creator using the non-session endpoint
+    if (newCourseId) {
+      try {
+        await enrollUserInCourse(currentUser._id, newCourseId);
+      } catch (e) {
+        console.error(
+          "Auto-enroll creator failed (safe to ignore if duplicate or server already enrolled):",
+          e
+        );
+      }
+    } else {
+      console.warn(
+        "Could not determine new course ID; creator might not be auto-enrolled."
+      );
+    }
+
+    // 5. Recompute myCourses from backend (using the robust fetchMyCourses you already have)
     await fetchMyCourses();
   };
+
 
   const onDeleteCourse = async (courseId: string) => {
     await coursesClient.deleteCourse(courseId);
