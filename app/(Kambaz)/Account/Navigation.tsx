@@ -6,8 +6,22 @@ import { useSelector } from "react-redux";
 
 export default function AccountNavigation() {
   const { currentUser } = useSelector((state: any) => state.accountReducer);
-  const links = currentUser ? ["Profile"] : ["Signin", "Signup"];
   const pathname = usePathname();
+
+  // Base links
+  let links: string[];
+
+  if (!currentUser) {
+    // Not logged in
+    links = ["Signin", "Signup"];
+  } else {
+    // Logged in
+    links = ["Profile"];
+    // Only admins get the Users link
+    if (currentUser.role === "ADMIN") {
+      links.push("Users");
+    }
+  }
 
   return (
     <div id="wd-account-navigation" className="wd list-group fs-5 rounded-0">
@@ -16,9 +30,11 @@ export default function AccountNavigation() {
         return (
           <Link
             key={link}
-            href={link}
+            href={link} // "Profile" -> /Account/Profile, "Users" -> /Account/Users
             id={`wd-${link.toLowerCase()}-link`}
-            className={`list-group-item border-0 ${active ? "active" : "text-danger"}`}
+            className={`list-group-item border-0 ${
+              active ? "active" : "text-danger"
+            }`}
           >
             {link}
           </Link>
