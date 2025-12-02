@@ -6,9 +6,19 @@ import * as client from "../client";
 import { FormControl } from "react-bootstrap";
 import { FaPlus } from "react-icons/fa6";
 
+type User = {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  username: string;
+  email?: string;
+  role?: string;
+  section?: string;
+};
+
 export default function Users() {
   const { uid } = useParams();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [role, setRole] = useState("");
   const [name, setName] = useState("");
 
@@ -41,7 +51,6 @@ export default function Users() {
     }
   };
 
-  // 🔴 NEW: createUser handler
   const createUser = async () => {
     const user = await client.createUser({
       firstName: "New",
@@ -52,12 +61,11 @@ export default function Users() {
       section: "S101",
       role: "STUDENT",
     });
-    setUsers([...users, user]); // append new user to the table
+    setUsers([...users, user]);
   };
 
   return (
     <div>
-      {/* NEW + People button */}
       <button
         onClick={createUser}
         className="float-end btn btn-danger wd-add-people"
@@ -69,6 +77,7 @@ export default function Users() {
       <h3>Users</h3>
 
       <FormControl
+        value={name}
         onChange={(e) => filterUsersByName(e.target.value)}
         placeholder="Search people"
         className="float-start w-25 me-2 wd-filter-by-name"
