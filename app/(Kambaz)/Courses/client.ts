@@ -19,11 +19,9 @@ export const findMyCourses = async () => {
 };
 
 export const createCourse = async (course: any) => {
-  const { data } = await axiosWithCredentials.post(
-    `${USERS_API}/current/courses`,
-    course
-  );
-  return data;
+  const res = await axios.post(COURSES_API, course);
+  console.log("createCourse response:", res.status, res.data);
+  return res.data;
 };
 
 export const deleteCourse = async (id: string) => {
@@ -64,7 +62,7 @@ export const updateModule = async (courseId: string, module: any) => {
   return data;
 };
 
-// 🔹 NEW: enroll / unenroll client functions
+// 🔹 enroll / unenroll client functions
 export const enrollIntoCourse = async (userId: string, courseId: string) => {
   const { data } = await axiosWithCredentials.post(
     `${USERS_API}/${userId}/courses/${courseId}`
@@ -72,10 +70,7 @@ export const enrollIntoCourse = async (userId: string, courseId: string) => {
   return data;
 };
 
-export const unenrollFromCourse = async (
-  userId: string,
-  courseId: string
-) => {
+export const unenrollFromCourse = async (userId: string, courseId: string) => {
   const { data } = await axiosWithCredentials.delete(
     `${USERS_API}/${userId}/courses/${courseId}`
   );
@@ -86,5 +81,3 @@ export const findUsersForCourse = async (courseId: string) => {
   const { data } = await axios.get(`${COURSES_API}/${courseId}/users`);
   return data;
 };
-
-
