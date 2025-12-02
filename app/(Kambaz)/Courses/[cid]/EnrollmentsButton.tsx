@@ -4,10 +4,6 @@
 import { Button } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "next/navigation";
-import {
-  unenrollUserFromCourse,
-  enrollUserInCourse,
-} from "../../Enrollments/client";
 import { setMyCourses } from "../reducer";
 import * as coursesClient from "../client";
 import * as enrollmentsClient from "../../Enrollments/client";
@@ -35,16 +31,18 @@ export default function EnrollmentsButton({ courseId }: Props) {
       return;
     }
 
-    // Try session-based "current user courses" first
+    // Try session-based endpoint first
     try {
       const courses = await coursesClient.findMyCourses();
       if (Array.isArray(courses) && courses.length > 0) {
         dispatch(setMyCourses(courses));
         return;
       }
-      // If empty, fall through to fallback
     } catch (err) {
-      console.error("findMyCourses in EnrollmentsButton failed, falling back:", err);
+      console.error(
+        "findMyCourses in EnrollmentsButton failed, falling back:",
+        err
+      );
     }
 
     // Fallback based on enrollments + all courses
@@ -74,12 +72,12 @@ export default function EnrollmentsButton({ courseId }: Props) {
   };
 
   const handleEnroll = async () => {
-    await enrollUserInCourse(userId, cid);
+    await coursesClient.enrollIntoCourse(userId, cid as string);
     await refreshMyCourses();
   };
 
   const handleUnenroll = async () => {
-    await unenrollUserFromCourse(userId, cid);
+    await coursesClient.unenrollFromCourse(userId, cid as string);
     await refreshMyCourses();
   };
 

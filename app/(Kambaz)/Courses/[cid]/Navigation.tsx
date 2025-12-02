@@ -14,8 +14,9 @@ const links = [
   "People",
 ] as const;
 
+// ⬇️ REMOVE or fix this override
 const ROUTE_OVERRIDES: Record<string, string> = {
-  People: "People/Table"
+  // People: "People/Table",   ❌ this is the problem
 };
 
 export default function CourseNavigation({ cid }: { cid: string }) {
@@ -24,6 +25,7 @@ export default function CourseNavigation({ cid }: { cid: string }) {
   return (
     <div id="wd-courses-navigation" className="wd list-group fs-5 rounded-0">
       {links.map((label) => {
+        // For People, subpath will just be "People"
         const subpath = ROUTE_OVERRIDES[label] ?? label;
         const href = `/Courses/${cid}/${subpath}`;
         const isActive = pathname?.startsWith(href);
@@ -45,5 +47,4 @@ export default function CourseNavigation({ cid }: { cid: string }) {
     </div>
   );
 }
-
 

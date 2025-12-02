@@ -18,8 +18,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { setMyCourses } from "../Courses/reducer";
 import * as coursesClient from "../Courses/client";
 import * as enrollmentsClient from "../Enrollments/client";
-import { enrollUserInCourse } from "../Enrollments/client";
-
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -136,7 +134,7 @@ export default function Dashboard() {
     // 4. If we have an ID, explicitly enroll creator using the non-session endpoint
     if (newCourseId) {
       try {
-        await enrollUserInCourse(currentUser._id, newCourseId);
+        await coursesClient.enrollIntoCourse(currentUser._id, newCourseId);
       } catch (e) {
         console.error(
           "Auto-enroll creator failed (safe to ignore if duplicate or server already enrolled):",
